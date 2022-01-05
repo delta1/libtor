@@ -1,0 +1,48 @@
+name: Cross compile windows
+on: [push]
+
+jobs:
+  linux-cross-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          toolchain: ${{ matrix.channel }}
+          target: ${{ matrix.target }}
+      - run: sudo apt-get install -y gcc-mingw-w64-x86-64 libnpth-mingw-w64-dev
+      # gcc-mingw-w64-i686
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --features=${{ matrix.features }} --target ${{ matrix.target }} -vv --release
+      - name: md5
+        run: |
+          cd target/x86_64-pc-windows-gnu/release/
+          ls -alht .
+          md5sum libtor.* | tee temp.txt
+          mv temp.txt libtor.md5
+      - uses: actions/upload-artifact@v2
+        with:
+          name: libtor
+          path: target/x86_64-pc-windows-gnu/release/libtor.*
+          if-no-files-found: error
+    strategy:
+      matrix:
+        channel: [nightly-2022-01-03]
+        # channel: [stable, nightly-2021-09-18]
+        # always build at least with `vendored-openssl` for MingW
+        features: ["vendored-openssl"]
+        # features: ["vendored-openssl", "vendored-openssl,vendored-lzma,vendored-zstd"]
+        target:
+          - x86_64-pc-windows-gnu
+          # - i686-pc-windows-gnu
