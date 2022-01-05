@@ -29,12 +29,12 @@ jobs:
         run: |
           cd target/x86_64-pc-windows-gnu/release/
           ls -alht .
-          md5sum libtor.* | tee temp.txt
-          mv temp.txt libtor.md5
+          md5sum liblibtor.* | tee temp.txt
+          mv temp.txt liblibtor.md5
       - uses: actions/upload-artifact@v2
         with:
-          name: libtor
-          path: target/x86_64-pc-windows-gnu/release/libtor.*
+          name: liblibtor
+          path: target/x86_64-pc-windows-gnu/release/liblibtor.*
           if-no-files-found: error
     strategy:
       matrix:
